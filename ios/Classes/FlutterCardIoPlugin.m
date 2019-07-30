@@ -23,6 +23,7 @@
 - (instancetype)initWithViewController:(UIViewController *)viewController {
     self = [super init];
     if (self) {
+        NSLog(@"initWithViewController");
         _viewController = viewController;
         _scanViewController = [[CardIOPaymentViewController alloc] initWithPaymentDelegate:self];
     }
@@ -39,6 +40,7 @@
     }
     
     if ([@"scanCard" isEqualToString:call.method]) {
+         NSLog(@"scanCard");
         _scanViewController.delegate = self;
         
         _result = result;
@@ -64,6 +66,7 @@
 }
 
 - (void)userDidCancelPaymentViewController:(CardIOPaymentViewController *)paymentViewController {
+    NSLog(@"userDidCancelPaymentViewController");
     [_scanViewController dismissViewControllerAnimated:YES completion:nil];
     _result([NSNull null]);
     _result = nil;
