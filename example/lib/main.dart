@@ -19,7 +19,7 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   _scanCard() async {
-    Map<String, dynamic> details;
+    var details;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       details = await FlutterCardIo.scanCard({
@@ -30,6 +30,10 @@ class _MyAppState extends State<MyApp> {
         "restrictPostalCodeToNumericOnly": true,
         "requireCardHolderName": true,
         "scanInstructions": "Hola! Fit the card within the box",
+        "cancelTitle":"Cancelar",
+        "doneTitle":"Listo",
+        "iconColor":0xFFFFFF,
+        "titlesColor":0xFF0000,
       });
 
     } on PlatformException {
@@ -45,7 +49,7 @@ class _MyAppState extends State<MyApp> {
     if (!mounted) return;
 
     setState(() {
-      _data = details;
+      _data = Map.from(details) ;
     });
   }
 

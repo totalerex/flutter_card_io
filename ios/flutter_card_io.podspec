@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_card_io'
-  s.version          = '0.0.1'
+  s.version          = '0.0.2'
   s.summary          = 'CardIO flutter plugin.'
   s.description      = <<-DESC
 CardIO flutter plugin.
@@ -14,9 +14,14 @@ CardIO flutter plugin.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
+  s.resource_bundles = {
+    'ScanAssets' => [
+        'Assets/**/*.png'
+    ]
+  }
   s.dependency 'Flutter'
-  s.dependency 'CardIO'
-  s.ios.deployment_target = '8.0'
+  s.dependency 'PayCardsRecognizer'
+  s.ios.deployment_target = '10.0'
   s.static_framework = true
 end
 

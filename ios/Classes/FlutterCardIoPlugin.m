@@ -1,14 +1,18 @@
 #import "FlutterCardIoPlugin.h"
-#import "CardIO.h"
+#import "ScanViewController.h"
+#import "ScanViewControllerDelegate.h"
+#import <UIKit/UIKit.h>
 
-@interface FlutterCardIoPlugin ()<CardIOPaymentViewControllerDelegate>
+#define UIColorFromRGB(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0];
+
+@interface FlutterCardIoPlugin ()<ScanViewControllerDelegate>
 @end
 
 @implementation FlutterCardIoPlugin {
     FlutterResult _result;
     NSDictionary *_arguments;
-    CardIOPaymentViewController *_scanViewController;
     UIViewController *_viewController;
+    ScanViewController *_scanViewController;
 }
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
@@ -38,24 +42,23 @@
     }
     
     if ([@"scanCard" isEqualToString:call.method]) {
-         _scanViewController = [[CardIOPaymentViewController alloc] initWithPaymentDelegate:self];
-        _scanViewController.delegate = self;
+
+        _scanViewController = [[ScanViewController alloc] init];
         
         _result = result;
         _arguments = call.arguments;
         
-        _scanViewController.scanExpiry = [_arguments objectForKey:@"scanExpiry"] ? [[_arguments objectForKey:@"scanExpiry"] boolValue] : false;
-        _scanViewController.collectExpiry = [_arguments objectForKey:@"requireExpiry"] ? [[_arguments objectForKey:@"requireExpiry"] boolValue] : false;
-        _scanViewController.collectCVV = [_arguments objectForKey:@"requireCVV"] ? [[_arguments objectForKey:@"requireCVV"] boolValue] : false;
-        _scanViewController.collectPostalCode = [_arguments objectForKey:@"requirePostalCode"] ? [[_arguments objectForKey:@"requirePostalCode"] boolValue] : false;
-        _scanViewController.collectCardholderName = [_arguments objectForKey:@"requireCardHolderName"] ? [[_arguments objectForKey:@"requireCardHolderName"] boolValue] : false;
-        _scanViewController.restrictPostalCodeToNumericOnly = [_arguments objectForKey:@"restrictPostalCodeToNumericOnly"] ? [[_arguments objectForKey:@"restrictPostalCodeToNumericOnly"] boolValue] : false;
-        _scanViewController.scanInstructions = [_arguments valueForKey:@"scanInstructions"];
-        _scanViewController.keepStatusBarStyle = [_arguments objectForKey:@"keepApplicationTheme"] ? [[_arguments objectForKey:@"keepApplicationTheme"] boolValue] : false;
-        _scanViewController.hideCardIOLogo = [_arguments objectForKey:@"hideCardIOLogo"] ? [[_arguments objectForKey:@"hideCardIOLogo"] boolValue] : false;
-        _scanViewController.useCardIOLogo = [_arguments objectForKey:@"useCardIOLogo"] ? [[_arguments objectForKey:@"useCardIOLogo"] boolValue] : false;
-        _scanViewController.suppressScanConfirmation = [_arguments objectForKey:@"suppressConfirmation"] ? [[_arguments objectForKey:@"suppressConfirmation"] boolValue] : false;
-        _scanViewController.disableManualEntryButtons = [_arguments objectForKey:@"suppressManualEntry"] ? [[_arguments objectForKey:@"suppressManualEntry"] boolValue] : false;
+        NSNumber *iconColorNumber = [_arguments objectForKey:@"iconColor"] ? [_arguments objectForKey:@"iconColor"] : 0;
+        UIColor *iconColor = UIColorFromRGB(iconColorNumber.intValue);
+        
+        NSNumber *titleColorNumber = [_arguments objectForKey:@"titlesColor"] ? [_arguments objectForKey:@"titlesColor"] : 0;
+        UIColor *titleColor = UIColorFromRGB(titleColorNumber.intValue);
+
+        _scanViewController.cancelTitle =  [_arguments objectForKey:@"cancelTitle"];
+        _scanViewController.doneTitle =  [_arguments objectForKey:@"doneTitle"];
+        _scanViewController.iconColor =  [_arguments objectForKey:@"iconColor"] ? iconColor : nil;
+        _scanViewController.titlesColor = [_arguments objectForKey:@"titlesColor"] ? titleColor : [UIColor redColor];
+        _scanViewController.scanDelegate = self;
         
         [_viewController presentViewController:_scanViewController animated:YES completion:nil];
     } else {
@@ -63,53 +66,23 @@
     }
 }
 
-- (void)userDidCancelPaymentViewController:(CardIOPaymentViewController *)paymentViewController {
+- (void)userDidCancelScanViewController:(ScanViewController *)scanViewController {
     [_scanViewController dismissViewControllerAnimated:YES completion:nil];
     _result([NSNull null]);
     _result = nil;
     _arguments = nil;
 }
 
-- (void)userDidProvideCreditCardInfo:(CardIOCreditCardInfo *)info inPaymentViewController:(CardIOPaymentViewController *)paymentViewController {
-    NSString *cardType = nil;
-    if(info.cardType != CardIOCreditCardTypeUnrecognized && info.cardType != CardIOCreditCardTypeAmbiguous) {
-        switch (info.cardType) {
-            case CardIOCreditCardTypeAmex:
-                cardType = @"Amex";
-                break;
-            case CardIOCreditCardTypeJCB:
-                cardType = @"JCB";
-                break;
-            case CardIOCreditCardTypeVisa:
-                cardType = @"Visa";
-                break;
-            case CardIOCreditCardTypeMastercard:
-                cardType = @"MasterCard";
-                break;
-            case CardIOCreditCardTypeDiscover:
-                cardType = @"Discover";
-                break;
-            default:
-                break;
-        }
-    }
-    _result(@{
-        @"cardholderName": ObjectOrNull(info.cardholderName),
-        @"cardNumber": ObjectOrNull(info.cardNumber),
-        @"cardType": ObjectOrNull(cardType),
-        @"redactedCardNumber": ObjectOrNull(info.redactedCardNumber),
-        @"expiryMonth": ObjectOrNull(@(info.expiryMonth)),
-        @"expiryYear": ObjectOrNull(@(info.expiryYear)),
-        @"cvv": ObjectOrNull(info.cvv),
-        @"postalCode": ObjectOrNull(info.postalCode)
-    });
+- (void)userDidProvideScanCreditCardInfo:(PayCardsRecognizerResult *)scanResult inScanViewController:(ScanViewController *)scanViewController {
     [_scanViewController dismissViewControllerAnimated:YES completion:nil];
+    _result(@{
+        @"cardholderName": scanResult.recognizedHolderName,
+        @"cardNumber": scanResult.recognizedNumber,
+        @"expiryMonth": scanResult.recognizedExpireDateMonth,
+        @"expiryYear": scanResult.recognizedExpireDateYear
+    }); 
     _result = nil;
     _arguments = nil;
-}
-
-static id ObjectOrNull(id object) {
-    return object ?: [NSNull null];
 }
 
 @end
