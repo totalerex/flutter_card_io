@@ -76,10 +76,10 @@
 - (void)userDidProvideScanCreditCardInfo:(PayCardsRecognizerResult *)scanResult inScanViewController:(ScanViewController *)scanViewController {
     [_scanViewController dismissViewControllerAnimated:YES completion:nil];
     _result(@{
-        @"cardholderName": scanResult.recognizedHolderName,
-        @"cardNumber": scanResult.recognizedNumber,
-        @"expiryMonth": scanResult.recognizedExpireDateMonth,
-        @"expiryYear": scanResult.recognizedExpireDateYear
+       @"cardholderName": scanResult.recognizedHolderName ? scanResult.recognizedHolderName : @"",
+        @"cardNumber": scanResult.recognizedNumber ? scanResult.recognizedNumber : @"",
+        @"expiryMonth": scanResult.recognizedExpireDateMonth ? scanResult.recognizedExpireDateMonth : @"",
+        @"expiryYear": scanResult.recognizedExpireDateYear ? scanResult.recognizedExpireDateYear : @""
     }); 
     _result = nil;
     _arguments = nil;
