@@ -18,7 +18,7 @@
     [super viewWillLayoutSubviews];
     
      NSLog(@"viewWillLayoutSubviews");
-    if (_goItem == nil) {
+    
         UINavigationBar *_bar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
            [self.view addSubview:_bar];
            
@@ -39,7 +39,7 @@
            [_title setRightBarButtonItem:_goItem];
            
            [_bar setItems:@[_title]];
-    }
+    
     
    
 }
