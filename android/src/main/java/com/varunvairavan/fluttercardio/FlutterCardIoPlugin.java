@@ -1,14 +1,19 @@
 package com.varunvairavan.fluttercardio;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import io.card.payment.CardIOActivity;
-import io.card.payment.CardType;
-import io.card.payment.CreditCard;
+//import io.card.payment.CardIOActivity;
+//import io.card.payment.CardType;
+//import io.card.payment.CreditCard;
+import cards.pay.paycardsrecognizer.sdk.Card;
+import cards.pay.paycardsrecognizer.sdk.ScanCardIntent;
+import cards.pay.paycardsrecognizer.sdk.ScanCardIntent.CancelReason;
+
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -22,6 +27,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
  */
 public class FlutterCardIoPlugin implements MethodCallHandler, ActivityResultListener {
     private static final int MY_SCAN_REQUEST_CODE = 100;
+    private static final int REQUEST_CODE_SCAN_CARD = 1;
 
     private final PluginRegistry.Registrar registrar;
     private Result pendingResult;
@@ -58,7 +64,10 @@ public class FlutterCardIoPlugin implements MethodCallHandler, ActivityResultLis
         methodCall = call;
 
         if (call.method.equals("scanCard")) {
-            Intent scanIntent = new Intent(activity, CardIOActivity.class);
+            //Intent scanIntent = new Intent(activity, CardIOActivity.class);
+
+            Intent intent = new ScanCardIntent.Builder(activity.getApplicationContext()).build();
+            activity.startActivityForResult(intent, REQUEST_CODE_SCAN_CARD);
 
             boolean requireExpiry = false;
             if (methodCall.hasArgument("requireExpiry")) {
@@ -126,7 +135,7 @@ public class FlutterCardIoPlugin implements MethodCallHandler, ActivityResultLis
             }
 
             // customize these values to suit your needs.
-            scanIntent.putExtra(CardIOActivity.EXTRA_REQUIRE_EXPIRY, requireExpiry); // default: false
+            /*scanIntent.putExtra(CardIOActivity.EXTRA_REQUIRE_EXPIRY, requireExpiry); // default: false
             scanIntent.putExtra(CardIOActivity.EXTRA_SCAN_EXPIRY, scanExpiry);
             scanIntent.putExtra(CardIOActivity.EXTRA_REQUIRE_CVV, requireCVV); // default: false
             scanIntent.putExtra(CardIOActivity.EXTRA_REQUIRE_POSTAL_CODE, requirePostalCode); // default: false
@@ -138,18 +147,19 @@ public class FlutterCardIoPlugin implements MethodCallHandler, ActivityResultLis
             scanIntent.putExtra(CardIOActivity.EXTRA_USE_CARDIO_LOGO, useCardIOLogo);
             scanIntent.putExtra(CardIOActivity.EXTRA_HIDE_CARDIO_LOGO, hideCardIOLogo);
             scanIntent.putExtra(CardIOActivity.EXTRA_USE_PAYPAL_ACTIONBAR_ICON, usePayPalActionbarIcon);
-            scanIntent.putExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, keepApplicationTheme);
+            scanIntent.putExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, keepApplicationTheme); */
 
             // MY_SCAN_REQUEST_CODE is arbitrary and is only used within this activity.
-            activity.startActivityForResult(scanIntent, MY_SCAN_REQUEST_CODE);
+            //activity.startActivityForResult(scanIntent, MY_SCAN_REQUEST_CODE);
         } else {
             result.notImplemented();
         }
     }
 
+    
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == MY_SCAN_REQUEST_CODE) {
+        /* if (requestCode == MY_SCAN_REQUEST_CODE) {
             if (data != null && data.hasExtra(CardIOActivity.EXTRA_SCAN_RESULT)) {
                 CreditCard scanResult = data.getParcelableExtra(CardIOActivity.EXTRA_SCAN_RESULT);
 
@@ -197,7 +207,39 @@ public class FlutterCardIoPlugin implements MethodCallHandler, ActivityResultLis
             pendingResult = null;
             methodCall = null;
             return true;
+        } */
+        if (requestCode == REQUEST_CODE_SCAN_CARD) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (data != null) {
+                    Card card = data.getParcelableExtra(ScanCardIntent.RESULT_PAYCARDS_CARD);
+                    String cardData = "Card number: " + card.getCardNumberRedacted() + "\n"
+                                    + "Card holder: " + card.getCardHolderName() + "\n"
+                                    + "Card expiration date: " + card.getExpirationDate();
+                    System.out.println("Card info: " + cardData);
+
+
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("cardholderName", card.getCardHolderName());
+                    response.put("redactedCardNumber", card.getCardNumberRedacted());
+                    response.put("cardNumber", card.getCardNumber());
+                    response.put("expiryDate", card.getExpirationDate());
+                    pendingResult.success(response);
+
+                    
+                }else{
+                    pendingResult.success(null);
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                System.out.println("Scan canceled");
+            } else {
+                System.out.println("Scan failed");
+            }
+
+            pendingResult = null;
+            methodCall = null;
+            return true;
         }
+
         return false;
     }
 }

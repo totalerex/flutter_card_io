@@ -4,6 +4,7 @@ buildscript {
     repositories {
         google()
         jcenter()
+        maven { url "http://pay.cards/maven" }
     }
 
     dependencies {
@@ -14,6 +15,7 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "http://pay.cards/maven" }
     }
 }
 apply plugin: 'com.android.library'
@@ -28,6 +30,6 @@ android {
         disable 'InvalidPackage'
     }
     dependencies {
-        api 'io.card:android-sdk:5.5.1'
+        implementation 'cards.pay:paycardsrecognizer:1.1.0'
     }
 }
